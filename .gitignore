@@ -1,2 +1,52 @@
+# custom stuff
+
+/data
+
+# ---- Python ----
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.pdb
+*.pkl
+*.pickle
+
+# ---- UV virtual environment ----
+.venv/
+
+# ---- Dependency / build artifacts ----
+dist/
+build/
+*.egg-info/
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+*.ipynb~
+
+# ---- VS Code ----
+.vscode/
+
+# ---- Geospatial temp files ----
+*.aux.xml
+*.cpg
+*.dbf
+*.prj
+*.qpj
+*.shp.*
+*.shx
+*.sbn
+*.sbx
+*.geojson~
+
+# ---- Logs ----
+*.log
+
+# ---- OS-specific ----
+.DS_Store
+Thumbs.db
+
+# ---- Misc ----
+.env
+.env.*
+.cache/
+
