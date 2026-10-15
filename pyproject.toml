@@ -13,6 +13,7 @@ dependencies = [
     "pyproj>=3.8.0",
     "requests>=2.34.2",
     "shapely>=2.1.2",
+    "tqdm>=4.70.1",
 ]
 
 [project.scripts]
