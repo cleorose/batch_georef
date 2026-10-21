@@ -87,36 +87,19 @@ def ground_to_mercator_extent(ground_extent_m, latitude):
     return ground_extent_m / math.cos(math.radians(latitude))
 
 def update_tracker(tracker_path, results_df, layer="photos"):
-    """Update prepared photo metadata in an existing GeoPackage."""
+    """Update preparation results in a tracker GeoPackage."""
+
+    tracker = gpd.read_file(tracker_path, layer=layer)
 
     successful = results_df.loc[
         results_df["error"].isna()
-    ]
+    ].copy()
 
-    updates = [
-        (
-            int(row["width_px"]),
-            float(row["dpi_x"]),
-            float(row["h_extent"]),
-            row["date_download"],
-            "prepared",
-            row["source_id"],
-        )
-        for _, row in successful.iterrows()
-    ]
+    if successful.empty:
+        return 0
 
-    with sqlite3.connect(tracker_path) as conn:
-        conn.executemany(
-            f"""
-            UPDATE "{layer}"
-            SET width_px = ?,
-                dpi_x = ?,
-                h_extent = ?,
-                date_download = ?,
-                status = ?
-            WHERE source_id = ?
-            """,
-            updates,
-        )
+    if not tracker["source_id"].is_unique:
+        raise ValueError("Tracker source_id values must be unique")
 
-    return len(updates)
+    if not successful["source_id"].is_unique:
+        raise ValueError("Result source_id values must be unique")
