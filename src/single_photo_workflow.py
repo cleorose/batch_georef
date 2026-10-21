@@ -87,9 +87,7 @@ def ground_to_mercator_extent(ground_extent_m, latitude):
     return ground_extent_m / math.cos(math.radians(latitude))
 
 def update_tracker(tracker_path, results_df, layer="photos"):
-    """Update preparation results in a tracker GeoPackage."""
-
-    tracker = gpd.read_file(tracker_path, layer=layer)
+    """Update successfully prepared photos in a tracker GeoPackage."""
 
     successful = results_df.loc[
         results_df["error"].isna()
@@ -98,8 +96,38 @@ def update_tracker(tracker_path, results_df, layer="photos"):
     if successful.empty:
         return 0
 
+    tracker = gpd.read_file(tracker_path, layer=layer)
+
+    # Verify that source_id uniquely identifies each record
     if not tracker["source_id"].is_unique:
-        raise ValueError("Tracker source_id values must be unique")
+        raise ValueError("Duplicate source_id values in tracker")
 
     if not successful["source_id"].is_unique:
-        raise ValueError("Result source_id values must be unique")
+        raise ValueError("Duplicate source_id values in results")
+
+    updates = successful.set_index("source_id")
+    matched = tracker["source_id"].isin(updates.index)
+
+    if matched.sum() != len(successful):
+        raise ValueError("Some results have no matching tracker record")
+
+    # Update preparation metadata
+    for column in [
+        "width_px",
+        "dpi_x",
+        "h_extent",
+        "date_download",
+    ]:
+        values = tracker["source_id"].map(updates[column])
+        tracker.loc[matched, column] = values.loc[matched]
+
+    tracker.loc[matched, "status"] = "prepared"
+
+    # Save tracker
+    tracker.to_file(
+        tracker_path,
+        layer=layer,
+        driver="GPKG",
+    )
+
+    return int(matched.sum())
