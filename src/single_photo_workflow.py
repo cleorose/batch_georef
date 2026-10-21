@@ -2,6 +2,8 @@ from pathlib import Path
 import requests
 from PIL import Image
 import math
+from numbers import Real
+import sqlite3
 
 # download a photo
 def download_photo(url, output_path, timeout=60):
@@ -11,9 +13,14 @@ def download_photo(url, output_path, timeout=60):
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if output_path.exists():
-        with Image.open(output_path) as img:
-            img.verify()
-        return output_path
+        try:
+            with Image.open(output_path) as img:
+                if img.format != "JPEG":
+                    raise ValueError("Not a JPEG")
+                img.verify()
+            return output_path
+        except (OSError, ValueError):
+            print(f"Invalid JPEG, redownloading: {output_path.name}")
 
     temp_path = output_path.with_suffix(".part")
 
@@ -56,15 +63,60 @@ def get_image_metadata(image_path):
 def calculate_horizontal_extent(width_px, dpi_x, scale):
     """Calculate approximate ground width in meters."""
 
-    values = (width_px, dpi_x, scale)
+    try:
+        width_px = float(width_px)
+        dpi_x = float(dpi_x)
+        scale = float(scale)
+    except (TypeError, ValueError):
+        raise ValueError(
+            "Width, DPI, and scale must be numeric."
+        )
 
     if not all(
-        isinstance(v, (int, float)) and
         math.isfinite(v) and v > 0
-        for v in values
+        for v in (width_px, dpi_x, scale)
     ):
         raise ValueError(
             "Width, DPI, and scale must be positive numbers."
         )
 
     return (width_px / dpi_x) * 0.0254 * scale
+
+def ground_to_mercator_extent(ground_extent_m, latitude):
+    """Approximate Web Mercator extent from ground distance."""
+    return ground_extent_m / math.cos(math.radians(latitude))
+
+def update_tracker(tracker_path, results_df, layer="photos"):
+    """Update prepared photo metadata in an existing GeoPackage."""
+
+    successful = results_df.loc[
+        results_df["error"].isna()
+    ]
+
+    updates = [
+        (
+            int(row["width_px"]),
+            float(row["dpi_x"]),
+            float(row["h_extent"]),
+            row["date_download"],
+            "prepared",
+            row["source_id"],
+        )
+        for _, row in successful.iterrows()
+    ]
+
+    with sqlite3.connect(tracker_path) as conn:
+        conn.executemany(
+            f"""
+            UPDATE "{layer}"
+            SET width_px = ?,
+                dpi_x = ?,
+                h_extent = ?,
+                date_download = ?,
+                status = ?
+            WHERE source_id = ?
+            """,
+            updates,
+        )
+
+    return len(updates)
