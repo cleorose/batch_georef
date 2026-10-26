@@ -3,7 +3,7 @@ import requests
 from PIL import Image
 import math
 from numbers import Real
-import sqlite3
+import geopandas as gpd
 
 # download a photo
 def download_photo(url, output_path, timeout=60):
@@ -83,17 +83,22 @@ def calculate_horizontal_extent(width_px, dpi_x, scale):
     return (width_px / dpi_x) * 0.0254 * scale
 
 def ground_to_mercator_extent(ground_extent_m, latitude):
-    """Approximate Web Mercator extent from ground distance."""
+    """Convert approximate ground width to EPSG:3857 coordinate width."""
+
+    try:
+        latitude = float(latitude)
+    except (TypeError, ValueError):
+        raise ValueError("Latitude must be numeric.")
+
+    if not math.isfinite(latitude) or not -85 < latitude < 85:
+        raise ValueError("Latitude is outside the supported range.")
+
     return ground_extent_m / math.cos(math.radians(latitude))
 
 def update_tracker(tracker_path, results_df, layer="photos"):
     """Update successfully prepared photos in a tracker GeoPackage."""
 
-    successful = results_df.loc[
-        results_df["error"].isna()
-    ].copy()
-
-    if successful.empty:
+    if results_df.empty:
         return 0
 
     tracker = gpd.read_file(tracker_path, layer=layer)
@@ -102,26 +107,38 @@ def update_tracker(tracker_path, results_df, layer="photos"):
     if not tracker["source_id"].is_unique:
         raise ValueError("Duplicate source_id values in tracker")
 
-    if not successful["source_id"].is_unique:
+    if not results_df["source_id"].is_unique:
         raise ValueError("Duplicate source_id values in results")
 
-    updates = successful.set_index("source_id")
+    # Use source_id to match results to existing tracker records.
+    updates = results_df.set_index("source_id")
     matched = tracker["source_id"].isin(updates.index)
 
-    if matched.sum() != len(successful):
+    if matched.sum() != len(results_df):
         raise ValueError("Some results have no matching tracker record")
 
-    # Update preparation metadata
+    # Copy preparation metadata from results into matching tracker rows.
     for column in [
         "width_px",
         "dpi_x",
+        "ground_extent",
         "h_extent",
-        "date_download",
+        "date_prepared",
     ]:
         values = tracker["source_id"].map(updates[column])
         tracker.loc[matched, column] = values.loc[matched]
 
-    tracker.loc[matched, "status"] = "prepared"
+    # Set status according to whether preparation succeeded or failed.
+    errors = tracker["source_id"].map(updates["error"])
+
+    succeeded = matched & errors.isna()
+    failed = matched & errors.notna()
+
+    tracker.loc[succeeded, "status"] = "prepared"
+    tracker.loc[failed, "status"] = "failed_prep"
+
+    # Save error messages in the tracker for troubleshooting.
+    tracker.loc[matched, "error"] = errors.loc[matched]
 
     # Save tracker
     tracker.to_file(
