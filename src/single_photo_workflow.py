@@ -121,7 +121,7 @@ def update_tracker(tracker_path, results_df, layer="photos"):
     for column in [
         "width_px",
         "dpi_x",
-        "ground_extent",
+        "ground_width",
         "h_extent",
         "date_prepared",
     ]:
