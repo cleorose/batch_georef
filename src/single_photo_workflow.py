@@ -12,15 +12,9 @@ def download_photo(url, output_path, timeout=60):
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if output_path.exists():
-        try:
-            with Image.open(output_path) as img:
-                if img.format != "JPEG":
-                    raise ValueError("Not a JPEG")
-                img.verify()
-            return output_path
-        except (OSError, ValueError):
-            print(f"Invalid JPEG, redownloading: {output_path.name}")
+    # Skip files already downloaded
+    if output_path.is_file() and output_path.stat().st_size > 0:
+        return output_path
 
     temp_path = output_path.with_suffix(".part")
 
@@ -33,6 +27,7 @@ def download_photo(url, output_path, timeout=60):
                     if chunk:
                         f.write(chunk)
 
+        # Validate newly downloaded JPEG
         with Image.open(temp_path) as img:
             if img.format != "JPEG":
                 raise ValueError(f"Downloaded file is not a JPEG: {url}")
@@ -60,9 +55,8 @@ def get_image_metadata(image_path):
         "dpi_y": dpi[1] if dpi else None,
     }
 
-# rename function and variables to reflect that it's for both dimensions
 def calculate_ground_extent(pixels, dpi, scale):
-    """Calculate approximate ground width in meters."""
+    """Calculate approximate ground width OR height in meters."""
 
     try:
         pixels = float(pixels)
@@ -80,7 +74,8 @@ def calculate_ground_extent(pixels, dpi, scale):
         raise ValueError(
             "Width, DPI, and scale must be positive numbers."
         )
-
+    
+    # inches to meters 
     return (pixels / dpi) * 0.0254 * scale
 
 def ground_to_mercator_extent(ground_extent_m, latitude):
@@ -121,9 +116,13 @@ def update_tracker(tracker_path, results_df, layer="photos"):
     # Copy preparation metadata from results into matching tracker rows.
     for column in [
         "width_px",
+        "height_px",
         "dpi_x",
+        "dpi_y",
         "ground_width",
-        "h_extent",
+        "ground_height",
+        "wm_width",
+        "wm_height",
         "date_prepared",
     ]:
         values = tracker["source_id"].map(updates[column])
