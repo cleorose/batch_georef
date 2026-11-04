@@ -50,22 +50,23 @@ def get_image_metadata(image_path):
     """Read image width and horizontal DPI."""
 
     with Image.open(image_path) as img:
-        width_px = img.width
+        width_px, height_px = img.size
         dpi = img.info.get("dpi")
-
-    dpi_x = dpi[0] if dpi else None
 
     return {
         "width_px": width_px,
-        "dpi_x": dpi_x,
+        "height_px": height_px,
+        "dpi_x": dpi[0] if dpi else None,
+        "dpi_y": dpi[1] if dpi else None,
     }
 
-def calculate_horizontal_extent(width_px, dpi_x, scale):
+# rename function and variables to reflect that it's for both dimensions
+def calculate_ground_extent(pixels, dpi, scale):
     """Calculate approximate ground width in meters."""
 
     try:
-        width_px = float(width_px)
-        dpi_x = float(dpi_x)
+        pixels = float(pixels)
+        dpi = float(dpi)
         scale = float(scale)
     except (TypeError, ValueError):
         raise ValueError(
@@ -74,16 +75,16 @@ def calculate_horizontal_extent(width_px, dpi_x, scale):
 
     if not all(
         math.isfinite(v) and v > 0
-        for v in (width_px, dpi_x, scale)
+        for v in (pixels, dpi, scale)
     ):
         raise ValueError(
             "Width, DPI, and scale must be positive numbers."
         )
 
-    return (width_px / dpi_x) * 0.0254 * scale
+    return (pixels / dpi) * 0.0254 * scale
 
 def ground_to_mercator_extent(ground_extent_m, latitude):
-    """Convert approximate ground width to EPSG:3857 coordinate width."""
+    """Convert approximate ground extent to EPSG:3857 coordinate extent."""
 
     try:
         latitude = float(latitude)
