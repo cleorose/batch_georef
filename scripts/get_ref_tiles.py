@@ -1,45 +1,56 @@
-from qgis.core import (
-    QgsRectangle,
-    QgsCoordinateReferenceSystem,
+import geopandas as gpd
+import sys
+from pathlib import Path
+import numpy as np
+import rasterio
+from rasterio.transform import from_bounds
+from qgis.core import QgsRasterLayer, QgsProject
+
+# Project root (contains src/)
+PROJECT_ROOT = Path(
+    r"C:\Users\eu01251115\LocalProjects\batch_georef"
 )
 
+# Magic Georeferencer modules
+MG_MODULES = Path(
+    r"C:\Users\eu01251115\LocalProjects\georefio\magic_georeferencer\core"
+)
+
+# Make both importable
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(MG_MODULES))
+
+# Imports
 from tile_fetcher import TileFetcher
+from src.ref_imagery import get_reference_image
 
 
-def get_reference_image(photo, source_name, target_size=832):
-    """Fetch reference imagery for a prepared photo."""
+tracker_path = r"C:\Users\eu01251115\LocalProjects\batch_georef\data\historic_airphoto_index\subsets\subset_20000_carver_37_38_40_51_57_63_tracker.gpkg"
 
-    center_x = photo.geometry.x
-    center_y = photo.geometry.y
+# Read tracker
+tracker = gpd.read_file(tracker_path, layer="photos")
 
-    half_width = photo["wm_width"] / 2
-    half_height = photo["wm_height"] / 2
+# Select prepared photographs
+ready = tracker.loc[
+    tracker["wm_width"].notna()
+    & tracker["wm_height"].notna()
+    & tracker["error"].isna()
+]
 
-    extent = QgsRectangle(
-        center_x - half_width,
-        center_y - half_height,
-        center_x + half_width,
-        center_y + half_height,
-    )
-
-    fetcher = TileFetcher()
-
-    image, actual_extent = fetcher.render_tiles_with_qgis(
-        extent=extent,
-        crs=QgsCoordinateReferenceSystem("EPSG:3857"),
-        source_name=source_name,
-        target_size=target_size,
-    )
-
-    return image, actual_extent
-
+# Select one photo
 photo = ready.iloc[0]
 
+# Initialize Magic Georeferencer tile fetcher
+fetcher = TileFetcher()
+
+# Fetch reference imagery
 image, actual_extent = get_reference_image(
     photo,
-    source_name="YOUR_ESRI_SOURCE_KEY",
+    fetcher=fetcher,
+    source_name="esri_world_imagery",
     target_size=832,
 )
 
+print("Photo:", photo["source_id"])
 print("Image shape:", image.shape)
 print("Actual extent:", actual_extent.toString())
