@@ -13,6 +13,7 @@ dependencies = [
     "ipywidgets>=8.1.9",
     "pillow>=13.0.0",
     "pyproj>=3.8.0",
+    "rasterio>=1.5.2",
     "requests>=2.34.2",
     "shapely>=2.1.2",
     "tqdm>=4.70.1",
