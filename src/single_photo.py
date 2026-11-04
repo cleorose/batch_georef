@@ -35,13 +35,8 @@ def select_photo(tracker_path, source_id, layer="photos"):
     return photo
 
 
-def load_photo_image(photo, download_dir):
+def load_photo_image(image_path):
     """Load an existing historical JPEG as an RGB NumPy array."""
-
-    image_path = (
-        Path(download_dir)
-        / f"{photo['cty_year_id']}_original.jpg"
-    )
 
     if not image_path.is_file():
         raise FileNotFoundError(image_path)

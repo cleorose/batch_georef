@@ -32,6 +32,10 @@ sys.path.insert(0, str(GEOREFIO_ROOT))
 from tile_fetcher import TileFetcher
 from magic_georeferencer.core.model_manager import ModelManager
 from magic_georeferencer.core.matcher import Matcher
+from magic_georeferencer.core.gcp_generator import GCPGenerator
+from magic_georeferencer.core.georeferencer import Georeferencer
+
+from qgis.core import QgsCoordinateReferenceSystem
 from src.single_photo import (
     select_photo,
     load_photo_image,
@@ -39,11 +43,20 @@ from src.single_photo import (
     update_match_metrics
 )
 
-# 1. Select prepared photo
+# 1. Select and locate the prepared photo
 photo = select_photo(TRACKER_PATH, SOURCE_ID)
 
+jpeg_path = (
+        Path(download_dir)
+        / f"{photo['cty_year_id']}_original.jpg"
+    )
+
+if not jpeg_path.is_file():
+    raise FileNotFoundError(jpeg_path)
+
 # 2. Load historical JPEG
-image_src = load_photo_image(photo, download_dir)
+
+image_src = load_photo_image(jpeg_path)
 
 print(f"Photo: {photo['source_id']}")
 print(f"Historical image: {image_src.shape}")
@@ -141,3 +154,50 @@ update_match_metrics(
     SOURCE_ID,
     metrics,
 )
+
+# 8. Generate GCPs
+
+generator = GCPGenerator()
+
+gcps = generator.matches_to_gcps(
+    match_result=filtered_result,
+    ref_extent=ref_extent,
+    ref_crs=QgsCoordinateReferenceSystem("EPSG:3857"),
+    ref_image_size=(image_ref.shape[1], image_ref.shape[0]),
+    src_image_size=(image_src.shape[1], image_src.shape[0]),
+    downsample_factor=1.0,
+)
+
+print("Generated GCPs:", len(gcps))
+print("First GCP:", gcps[0])
+
+if len(gcps) < 6:
+    raise RuntimeError(
+        f"Insufficient GCPs for georeferencing: {len(gcps)}"
+    )
+
+# 9. Georeference the image. 
+
+output_path = (
+    PROJECT_ROOT
+    / "data"
+    / "georeferenced"
+    / f"{SOURCE_ID}_esri_affine_test.tif"
+)
+
+output_path.parent.mkdir(parents=True, exist_ok=True)
+
+georeferencer = Georeferencer(iface=iface)
+
+success, message = georeferencer.georeference_image(
+    source_image_path=jpeg_path,
+    gcps=gcps,
+    output_path=output_path,
+    target_crs=QgsCoordinateReferenceSystem("EPSG:3857"),
+    transform_type="polynomial_1",
+    resampling="cubic",
+    compression="LZW",
+)
+
+print("Success:", success)
+print(message)
