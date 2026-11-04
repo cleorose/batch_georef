@@ -5,6 +5,8 @@ import numpy as np
 from PIL import Image
 
 from qgis.core import QgsRectangle, QgsCoordinateReferenceSystem
+from qgis.core import QgsVectorLayer, QgsField
+from qgis.PyQt.QtCore import QVariant
 
 
 def select_photo(tracker_path, source_id, layer="photos"):
@@ -79,3 +81,71 @@ def get_reference_image(
     )
 
     return image, actual_extent
+
+def update_match_metrics(tracker_path, source_id, metrics):
+    """Add missing metric fields and update one tracker record."""
+
+    layer = QgsVectorLayer(
+        f"{tracker_path}|layername=photos",
+        "tracker",
+        "ogr",
+    )
+
+    if not layer.isValid():
+        raise RuntimeError("Could not open tracker layer")
+
+    # Add any missing columns
+    field_types = {
+        "match_count": QVariant.Int,
+        "inlier_count": QVariant.Int,
+        "confidence": QVariant.Double,
+        "geometric_score": QVariant.Double,
+        "distribution_quality": QVariant.Double,
+        "match_seconds": QVariant.Double,
+    }
+
+    layer.startEditing()
+
+    try:
+        existing = set(layer.fields().names())
+
+        for name, field_type in field_types.items():
+            if name not in existing:
+                if not layer.addAttribute(QgsField(name, field_type)):
+                    raise RuntimeError(f"Could not add field: {name}")
+
+        layer.updateFields()
+
+        # Find the requested photograph
+        features = [
+            f for f in layer.getFeatures()
+            if str(f["source_id"]) == str(source_id)
+        ]
+
+        if len(features) != 1:
+            raise ValueError(
+                f"Expected one photo for {source_id}, found {len(features)}"
+            )
+
+        feature = features[0]
+
+        # Update its metrics
+        for name, value in metrics.items():
+            if not layer.changeAttributeValue(
+                feature.id(),
+                layer.fields().indexFromName(name),
+                value,
+            ):
+                raise RuntimeError(f"Could not update field: {name}")
+
+        if not layer.commitChanges():
+            raise RuntimeError(
+                f"Could not save tracker: {layer.commitErrors()}"
+            )
+
+    except Exception:
+        if layer.isEditable():
+            layer.rollBack()
+        raise
+
+    print(f"Updated tracker metrics for photo {source_id}")

@@ -22,7 +22,7 @@ GEOREFIO_ROOT = Path(
 
 download_dir = r"C:\Users\eu01251115\LocalProjects\batch_georef\data\downloads\subset_20000_carver_37_38_40_51_57_63"
 
-SOURCE_ID = "91674"
+SOURCE_ID = "92366"
 
 # Imports
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -36,6 +36,7 @@ from src.single_photo import (
     select_photo,
     load_photo_image,
     get_reference_image,
+    update_match_metrics
 )
 
 # 1. Select prepared photo
@@ -116,3 +117,27 @@ print("Geometric score:", match_result.geometric_score)
 print("Distribution quality:", match_result.distribution_quality)
 print("Processing time:", match_result.processing_time)
 print("Homography found:", match_result.transform_matrix is not None)
+
+# 6. Filter matches using the permissive threshold
+filtered_result = matcher.filter_matches(
+    match_result,
+    confidence_threshold=0.20,
+)
+
+print("Filtered matches:", filtered_result.num_matches())
+
+# 7. Save experiment metrics to tracker
+metrics = {
+    "match_count": match_result.num_matches(),
+    "inlier_count": filtered_result.num_matches(),
+    "confidence": match_result.mean_confidence(),
+    "geometric_score": match_result.geometric_score,
+    "distribution_quality": match_result.distribution_quality,
+    "match_seconds": match_result.processing_time,
+}
+
+update_match_metrics(
+    TRACKER_PATH,
+    SOURCE_ID,
+    metrics,
+)
