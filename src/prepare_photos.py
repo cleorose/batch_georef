@@ -5,6 +5,7 @@ import math
 from numbers import Real
 import geopandas as gpd
 
+
 # download a photo
 def download_photo(url, output_path, timeout=60):
     """Download a JPEG, skipping existing valid files."""
