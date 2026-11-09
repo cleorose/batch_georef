@@ -9,18 +9,18 @@ from qgis.core import QgsVectorLayer, QgsField
 from qgis.PyQt.QtCore import QVariant
 
 
-def select_photo(tracker_path, source_id, layer="photos"):
+def select_photo(tracker_path, cty_year_id, layer="photos"):
     """Select one prepared photo from the tracker."""
 
     tracker = gpd.read_file(tracker_path, layer=layer)
 
     matches = tracker.loc[
-        tracker["source_id"].astype(str) == str(source_id)
+        tracker["cty_year_id"].astype(str) == str(cty_year_id)
     ]
 
     if len(matches) != 1:
         raise ValueError(
-            f"Expected one photo with source_id={source_id}, "
+            f"Expected one photo with cty_year_id={cty_year_id}, "
             f"found {len(matches)}"
         )
 
@@ -77,7 +77,7 @@ def get_reference_image(
 
     return image, actual_extent
 
-def update_match_metrics(tracker_path, source_id, metrics):
+def update_match_metrics(tracker_path, cty_year_id, metrics):
     """Add missing metric fields and update one tracker record."""
 
     layer = QgsVectorLayer(
@@ -114,12 +114,12 @@ def update_match_metrics(tracker_path, source_id, metrics):
         # Find the requested photograph
         features = [
             f for f in layer.getFeatures()
-            if str(f["source_id"]) == str(source_id)
+            if str(f["cty_year_id"]) == str(cty_year_id)
         ]
 
         if len(features) != 1:
             raise ValueError(
-                f"Expected one photo for {source_id}, found {len(features)}"
+                f"Expected one photo for {cty_year_id}, found {len(features)}"
             )
 
         feature = features[0]
@@ -143,4 +143,4 @@ def update_match_metrics(tracker_path, source_id, metrics):
             layer.rollBack()
         raise
 
-    print(f"Updated tracker metrics for photo {source_id}")
+    print(f"Updated tracker metrics for photo {cty_year_id}")

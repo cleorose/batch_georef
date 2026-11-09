@@ -1,0 +1,18 @@
+# current batch
+
+county: Carver
+years: [1963]
+scale: 20000
+
+matching:
+  reference_source: esri_world_imagery
+  reference_size: 832
+  match_size: 512
+  confidence_threshold: 0.20
+  min_gcps: 6
+
+georeferencing:
+  target_crs: EPSG:3857
+  transform: polynomial_1
+  resampling: cubic
+  compression: LZW
