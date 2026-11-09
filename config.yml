@@ -1,3 +1,6 @@
+# folder that all other file paths are within
+data_dir: "data"
+
 # current batch
 
 county: Carver
