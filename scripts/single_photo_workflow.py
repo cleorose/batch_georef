@@ -22,7 +22,7 @@ GEOREFIO_ROOT = Path(
 
 download_dir = r"C:\Users\eu01251115\LocalProjects\batch_georef\data\downloads\subset_20000_carver_37_38_40_51_57_63"
 
-SOURCE_ID = "92363"
+CTY_YEAR_ID = "carver_1963_wm-1dd-230"
 
 # Imports
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -44,7 +44,7 @@ from src.single_photo import (
 )
 
 # 1. Select and locate the prepared photo
-photo = select_photo(TRACKER_PATH, SOURCE_ID)
+photo = select_photo(TRACKER_PATH, CTY_YEAR_ID)
 
 jpeg_path = (
         Path(download_dir)
@@ -58,7 +58,7 @@ if not jpeg_path.is_file():
 
 image_src = load_photo_image(jpeg_path)
 
-print(f"Photo: {photo['source_id']}")
+print(f"Photo: {photo['cyt_year_id']}")
 print(f"Historical image: {image_src.shape}")
 
 # 3. Retrieve reference imagery
@@ -151,7 +151,7 @@ metrics = {
 
 update_match_metrics(
     TRACKER_PATH,
-    SOURCE_ID,
+    CTY_YEAR_ID,
     metrics,
 )
 
@@ -182,7 +182,7 @@ output_path = (
     PROJECT_ROOT
     / "data"
     / "georeferenced"
-    / f"{SOURCE_ID}_esri_affine_test.tif"
+    / f"{CTY_YEAR_ID}_esri_affine_test.tif"
 )
 
 output_path.parent.mkdir(parents=True, exist_ok=True)

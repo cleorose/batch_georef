@@ -101,15 +101,15 @@ def update_tracker(tracker_path, results_df, layer="photos"):
     tracker = gpd.read_file(tracker_path, layer=layer)
 
     # Verify that source_id uniquely identifies each record
-    if not tracker["source_id"].is_unique:
-        raise ValueError("Duplicate source_id values in tracker")
+    if not tracker["cty_year_id"].is_unique:
+        raise ValueError("Duplicate cty_year_id values in tracker")
 
-    if not results_df["source_id"].is_unique:
-        raise ValueError("Duplicate source_id values in results")
+    if not results_df["cty_year_id"].is_unique:
+        raise ValueError("Duplicate cty_year_id values in results")
 
     # Use source_id to match results to existing tracker records.
-    updates = results_df.set_index("source_id")
-    matched = tracker["source_id"].isin(updates.index)
+    updates = results_df.set_index("cty_year_id")
+    matched = tracker["cty_year_id"].isin(updates.index)
 
     if matched.sum() != len(results_df):
         raise ValueError("Some results have no matching tracker record")
@@ -126,11 +126,11 @@ def update_tracker(tracker_path, results_df, layer="photos"):
         "wm_height",
         "date_prepared",
     ]:
-        values = tracker["source_id"].map(updates[column])
+        values = tracker["cty_year_id"].map(updates[column])
         tracker.loc[matched, column] = values.loc[matched]
 
     # Set status according to whether preparation succeeded or failed.
-    errors = tracker["source_id"].map(updates["error"])
+    errors = tracker["cty_year_id"].map(updates["error"])
 
     succeeded = matched & errors.isna()
     failed = matched & errors.notna()
