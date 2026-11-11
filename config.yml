@@ -6,7 +6,9 @@ batch_name: "carver_1963"
 county: Carver
 years: [1963]
 scale: 20000
-single_photo_id: "carver_1963_wm-1dd-3"
+chunk_size: 3 # null = no limit
+
+single_photo_id: "carver_1963_wm-1dd-228"
 
 # parameters
 matching:

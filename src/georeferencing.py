@@ -3,6 +3,7 @@ from pathlib import Path
 import geopandas as gpd
 import numpy as np
 from PIL import Image
+from datetime import datetime, timezone
 
 from qgis.core import QgsRectangle, QgsCoordinateReferenceSystem
 from qgis.core import QgsVectorLayer, QgsField
@@ -287,3 +288,81 @@ def process_one_photo(
         "match_seconds": match_result.processing_time,
         "gcp_count": len(gcps),
     }
+
+
+def update_georef_status(
+    tracker_path,
+    cty_year_id,
+    status,
+    error=None,
+):
+    """Record the georeferencing status of one photograph."""
+
+    layer = QgsVectorLayer(
+        f"{tracker_path}|layername=photos",
+        "tracker",
+        "ogr",
+    )
+
+    if not layer.isValid():
+        raise RuntimeError(f"Could not open tracker: {tracker_path}")
+
+    field_types = {
+        "date_georef": QVariant.String,
+        "georef_status": QVariant.String,
+        "georef_error": QVariant.String,
+    }
+
+    layer.startEditing()
+
+    try:
+        existing_fields = layer.fields().names()
+
+        for name, field_type in field_types.items():
+            if name not in existing_fields:
+                layer.addAttribute(QgsField(name, field_type))
+
+        layer.updateFields()
+
+        matches = [
+            feature
+            for feature in layer.getFeatures()
+            if str(feature["cty_year_id"]) == str(cty_year_id)
+        ]
+
+        if len(matches) != 1:
+            raise ValueError(
+                f"Expected one tracker record for {cty_year_id}; "
+                f"found {len(matches)}"
+            )
+
+        feature = matches[0]
+
+        values = {
+            "georef_status": status,
+            "georef_error": error,
+        }
+
+        if status == "success":
+            values["date_georef"] = datetime.now(
+                timezone.utc
+            ).isoformat()
+
+        for field_name, value in values.items():
+            field_index = layer.fields().indexFromName(field_name)
+            if not layer.changeAttributeValue(
+                feature.id(),
+                field_index,
+                value,
+            ):
+                raise RuntimeError(f"Could not update field: {field_name}")
+
+        if not layer.commitChanges():
+            raise RuntimeError(
+                f"Could not update tracker: {layer.commitErrors()}"
+            )
+
+    except Exception:
+        if layer.isEditable():
+            layer.rollBack()
+        raise
