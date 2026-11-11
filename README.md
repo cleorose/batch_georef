@@ -1,4 +1,6 @@
+# Batch Georeferencing Historic Airphotos
 
+This repository integrates modules from the Magic Georeferencer QGIS plugin with additional code for preparing, processing, and tracking batches of historic airphotos stored in the Borchert Map Library's MHAPO collection. 
 
 In QGIS you can reload an edited module:
 
