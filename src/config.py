@@ -18,13 +18,16 @@ def load_config(config_path=None):
     if not data_dir.is_absolute():
         data_dir = PROJECT_ROOT / data_dir
 
+    # resolve
     data_dir = data_dir.resolve()
+    mg_root = Path(cfg["mg_root"]).expanduser().resolve()
 
     batch_name = cfg["batch_name"]
 
     # Generate paths
     cfg["paths"] = {
         "data_dir": data_dir,
+        "mg_root": mg_root,
         "tracker": data_dir / "batches" / f"{batch_name}_tracker.gpkg",
         "downloads": data_dir / "downloads",
         "outputs": data_dir / "georeferenced",

@@ -1,27 +1,28 @@
 import sys
 from pathlib import Path
 
-# Paths
-PROJECT_ROOT = Path(
-    r"C:\Users\eu01251115\LocalProjects\batch_georef"
-)
+# Locate project root for execution in QGIS Python console.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+#Load configuration.
 from src.config import load_config
-
 cfg = load_config()
 
-GEOREFIO_ROOT = cfg["mg_root"]
+# Make Magic Georeferencer importable
+MG_ROOT = cfg["paths"]["mg_root"]
 
+if str(MG_ROOT) not in sys.path:
+    sys.path.insert(0, str(MG_ROOT))
+
+# Paths
 TRACKER_PATH = cfg["paths"]["tracker"]
-
 DOWNLOADS = cfg["paths"]["downloads"]
-
 CTY_YEAR_ID = cfg["single_photo_id"]
 
-# Imports
-sys.path.insert(0, str(PROJECT_ROOT))
-sys.path.insert(0, str(GEOREFIO_ROOT))
-
+# Import external dependencies
 from magic_georeferencer.core.tile_fetcher import TileFetcher
 from magic_georeferencer.core.model_manager import ModelManager
 from magic_georeferencer.core.matcher import Matcher
@@ -30,13 +31,18 @@ from magic_georeferencer.core.georeferencer import Georeferencer
 
 from qgis.core import QgsCoordinateReferenceSystem
 
-from georeferencing import (
+# Import project functions
+from src.georeferencing import (
     select_photo,
     load_photo_image,
     get_reference_image,
     initialize_matcher,
     update_match_metrics
 )
+
+# ----------
+# Workflow
+# ----------
 
 # 1. Select and locate the prepared photo
 photo = select_photo(TRACKER_PATH, CTY_YEAR_ID)
@@ -53,7 +59,7 @@ if not jpeg_path.is_file():
 
 image_src = load_photo_image(jpeg_path)
 
-print(f"Photo: {photo['cyt_year_id']}")
+print(f"Photo: {photo['cty_year_id']}")
 print(f"Historical image: {image_src.shape}")
 
 # 3. Retrieve reference imagery
