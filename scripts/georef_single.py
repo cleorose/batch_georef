@@ -58,6 +58,12 @@ print("Output:", output_path)
 if not jpeg_path.is_file():
     raise FileNotFoundError(jpeg_path)
 
+# some checks
+print(cfg["paths"])
+print(photo["cty_year_id"])
+print(paths)
+print(jpeg_path.is_file())
+
 # 2. Load historical JPEG
 
 image_src = load_photo_image(jpeg_path)
