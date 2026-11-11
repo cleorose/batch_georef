@@ -8,7 +8,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 #Load configuration.
-from src.config import load_config
+from src.config import load_config, photo_paths
 cfg = load_config()
 
 # Make Magic Georeferencer importable
@@ -16,11 +16,6 @@ MG_ROOT = cfg["paths"]["mg_root"]
 
 if str(MG_ROOT) not in sys.path:
     sys.path.insert(0, str(MG_ROOT))
-
-# Paths
-TRACKER_PATH = cfg["paths"]["tracker"]
-DOWNLOADS = cfg["paths"]["downloads"]
-CTY_YEAR_ID = cfg["single_photo_id"]
 
 # Import external dependencies
 from magic_georeferencer.core.tile_fetcher import TileFetcher
@@ -40,6 +35,10 @@ from src.georeferencing import (
     update_match_metrics
 )
 
+# Paths
+TRACKER_PATH = cfg["paths"]["tracker"]
+CTY_YEAR_ID = cfg["single_photo_id"]
+
 # ----------
 # Workflow
 # ----------
@@ -47,10 +46,14 @@ from src.georeferencing import (
 # 1. Select and locate the prepared photo
 photo = select_photo(TRACKER_PATH, CTY_YEAR_ID)
 
-jpeg_path = (
-        Path(DOWNLOADS)
-        / f"{photo['cty_year_id']}_original.jpg"
-    )
+paths = photo_paths(photo, cfg)
+
+jpeg_path = paths["jpeg"]
+output_path = paths["geotiff"]
+
+print("Tracker:", TRACKER_PATH)
+print("JPEG:", jpeg_path)
+print("Output:", output_path)
 
 if not jpeg_path.is_file():
     raise FileNotFoundError(jpeg_path)
@@ -68,8 +71,8 @@ fetcher = TileFetcher()
 image_ref, ref_extent = get_reference_image(
     photo,
     fetcher,
-    source_name="esri_world_imagery",
-    target_size=832,
+    source_name=cfg["matching"]["reference_source"],
+    target_size=cfg["matching"]["reference_size"],
 )
 
 print(f"Reference image: {image_ref.shape}")
@@ -94,26 +97,9 @@ print(f"Reference extent: {ref_extent.toString()}")
 # plt.tight_layout()
 # plt.show()
 
-# 4. Initialize and load the matching model
-# only if it isn't loaded already
+# 4. Initialize matching model if needed
 if "matcher" not in globals() or matcher.model_manager.model is None:
-    print("Loading matching model...")
-
-    model_manager = ModelManager()
-
-    print("Model weights available:", model_manager.weights_exist())
-    print("Device info:", model_manager.get_device_info())
-
-    success, message = model_manager.load_model()
-    print(message)
-
-    if not success:
-        raise RuntimeError(message)
-
-    matcher = Matcher(model_manager)
-
-    print("Matcher initialized successfully")
-    print("Matching configuration:", matcher.config)
+    matcher = initialize_matcher()
 else:
     print("Reusing existing matching model")
 
@@ -121,7 +107,7 @@ else:
 match_result = matcher.match_single_scale(
     image_src,
     image_ref,
-    size=512,
+    size=cfg["matching"]["match_size"],
 )
 
 print("\nMATCHING RESULTS")
@@ -135,7 +121,7 @@ print("Homography found:", match_result.transform_matrix is not None)
 # 6. Filter matches using the permissive threshold
 filtered_result = matcher.filter_matches(
     match_result,
-    confidence_threshold=0.20,
+    confidence_threshold=cfg["matching"]["confidence_threshold"],
 )
 
 print("Filtered matches:", filtered_result.num_matches())
@@ -170,21 +156,15 @@ gcps = generator.matches_to_gcps(
 )
 
 print("Generated GCPs:", len(gcps))
-print("First GCP:", gcps[0])
 
-if len(gcps) < 6:
+if len(gcps) < cfg["matching"]["min_gcps"]:
     raise RuntimeError(
         f"Insufficient GCPs for georeferencing: {len(gcps)}"
     )
 
-# 9. Georeference the image. 
+print("First GCP:", gcps[0])
 
-output_path = (
-    PROJECT_ROOT
-    / "data"
-    / "georeferenced"
-    / f"{CTY_YEAR_ID}_esri_affine_test.tif"
-)
+# 9. Georeference the image. 
 
 output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -194,10 +174,10 @@ success, message = georeferencer.georeference_image(
     source_image_path=jpeg_path,
     gcps=gcps,
     output_path=output_path,
-    target_crs=QgsCoordinateReferenceSystem("EPSG:3857"),
-    transform_type="polynomial_1",
-    resampling="cubic",
-    compression="LZW",
+    target_crs=QgsCoordinateReferenceSystem(cfg["georeferencing"]["target_crs"]),
+    transform_type=cfg["georeferencing"]["transform"],
+    resampling=cfg["georeferencing"]["resampling"],
+    compression=cfg["georeferencing"]["compression"],
 )
 
 print("Success:", success)
