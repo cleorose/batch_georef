@@ -1,4 +1,3 @@
-
 from pathlib import Path
 import yaml
 
@@ -23,21 +22,19 @@ def load_config(config_path=None):
     # Generate batch name
     county = cfg["county"].lower().replace(" ", "_")
     years = "_".join(str(y) for y in cfg["years"])
-    scale = cfg["scale"]
 
-    batch_name = f"{county}_{years}_{scale}"
+    batch_name = f"{county}_{years}"
 
     # Generate paths
     cfg["paths"] = {
         "data_dir": data_dir,
         "tracker": (
             data_dir
-            / "historic_airphoto_index"
-            / "subsets"
+            / "batches"
             / f"{batch_name}_tracker.gpkg"
         ),
-        "downloads": data_dir / "downloads" / batch_name,
-        "outputs": data_dir / "georeferenced" / batch_name,
+        "downloads": data_dir / "downloads" / f"{batch_name}_jpegs",
+        "outputs": data_dir / "georeferenced" / f"{batch_name}_geotiffs",
     }
 
     cfg["batch_name"] = batch_name

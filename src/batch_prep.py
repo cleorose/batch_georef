@@ -100,14 +100,14 @@ def update_tracker(tracker_path, results_df, layer="photos"):
 
     tracker = gpd.read_file(tracker_path, layer=layer)
 
-    # Verify that source_id uniquely identifies each record
+    # Verify that cty_year_id uniquely identifies each record
     if not tracker["cty_year_id"].is_unique:
         raise ValueError("Duplicate cty_year_id values in tracker")
 
     if not results_df["cty_year_id"].is_unique:
         raise ValueError("Duplicate cty_year_id values in results")
 
-    # Use source_id to match results to existing tracker records.
+    # Use cty_year_id to match results to existing tracker records.
     updates = results_df.set_index("cty_year_id")
     matched = tracker["cty_year_id"].isin(updates.index)
 
