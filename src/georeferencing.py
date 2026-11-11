@@ -8,6 +8,9 @@ from qgis.core import QgsRectangle, QgsCoordinateReferenceSystem
 from qgis.core import QgsVectorLayer, QgsField
 from qgis.PyQt.QtCore import QVariant
 
+from magic_georeferencer.core.model_manager import ModelManager
+from magic_georeferencer.core.matcher import Matcher
+
 
 def select_photo(tracker_path, cty_year_id, layer="photos"):
     """Select one prepared photo from the tracker."""
@@ -76,6 +79,28 @@ def get_reference_image(
     )
 
     return image, actual_extent
+
+def initialize_matcher():
+    """Load the matching model and return a ready-to-use Matcher."""
+
+    model_manager = ModelManager()
+
+    print("Model weights available:", model_manager.weights_exist())
+    print("Device info:", model_manager.get_device_info())
+
+    success, message = model_manager.load_model()
+    print(message)
+
+    if not success:
+        raise RuntimeError(message)
+
+    matcher = Matcher(model_manager)
+
+    print("Matcher initialized successfully")
+    print("Matching configuration:", matcher.config)
+
+    return matcher
+
 
 def update_match_metrics(tracker_path, cty_year_id, metrics):
     """Add missing metric fields and update one tracker record."""

@@ -6,40 +6,35 @@ PROJECT_ROOT = Path(
     r"C:\Users\eu01251115\LocalProjects\batch_georef"
 )
 
-MG_MODULES = Path(
-    r"C:\Users\eu01251115\LocalProjects\georefio\magic_georeferencer\core"
-)
+from src.config import load_config
 
-TRACKER_PATH = (
-    PROJECT_ROOT
-    / "data/historic_airphoto_index/subsets"
-    / "subset_20000_carver_37_38_40_51_57_63_tracker.gpkg"
-)
+cfg = load_config()
 
-GEOREFIO_ROOT = Path(
-    r"C:\Users\eu01251115\LocalProjects\georefio"
-)
+GEOREFIO_ROOT = cfg["mg_root"]
 
-download_dir = r"C:\Users\eu01251115\LocalProjects\batch_georef\data\downloads\subset_20000_carver_37_38_40_51_57_63"
+TRACKER_PATH = cfg["paths"]["tracker"]
 
-CTY_YEAR_ID = "carver_1963_wm-1dd-230"
+DOWNLOADS = cfg["paths"]["downloads"]
+
+CTY_YEAR_ID = cfg["single_photo_id"]
 
 # Imports
 sys.path.insert(0, str(PROJECT_ROOT))
-sys.path.insert(0, str(MG_MODULES))
 sys.path.insert(0, str(GEOREFIO_ROOT))
 
-from tile_fetcher import TileFetcher
+from magic_georeferencer.core.tile_fetcher import TileFetcher
 from magic_georeferencer.core.model_manager import ModelManager
 from magic_georeferencer.core.matcher import Matcher
 from magic_georeferencer.core.gcp_generator import GCPGenerator
 from magic_georeferencer.core.georeferencer import Georeferencer
 
 from qgis.core import QgsCoordinateReferenceSystem
-from src.single_photo import (
+
+from georeferencing import (
     select_photo,
     load_photo_image,
     get_reference_image,
+    initialize_matcher,
     update_match_metrics
 )
 
@@ -47,7 +42,7 @@ from src.single_photo import (
 photo = select_photo(TRACKER_PATH, CTY_YEAR_ID)
 
 jpeg_path = (
-        Path(download_dir)
+        Path(DOWNLOADS)
         / f"{photo['cty_year_id']}_original.jpg"
     )
 

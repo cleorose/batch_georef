@@ -1,12 +1,14 @@
-# folder that all other file paths are within
-data_dir: "data"
+# machine specific paths
+mg_root: "C:/Users/eu01251115/LocalProjects/georefio"
 
 # current batch
-
+batch_name: "carver_1963"
 county: Carver
 years: [1963]
 scale: 20000
+single_photo_id: "carver_1963_wm-1dd-230"
 
+# parameters
 matching:
   reference_source: esri_world_imagery
   reference_size: 832
@@ -19,3 +21,6 @@ georeferencing:
   transform: polynomial_1
   resampling: cubic
   compression: LZW
+
+# relative paths
+data_dir: "data"
