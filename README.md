@@ -11,7 +11,7 @@ The scripts in the scripts folder are meant to be run from within the QGIS edito
 Fields in the tracker table report the outcome of each photo's matching and georeferencing process, as follows: 
 - Field | Meaning
 - match_count | Number of feature correspondences the matching model initially identified between the historical photo and reference imagery.
-- inlier_count | In your current code, the number of matches remaining after applying the confidence threshold of 0.20.
+- inlier_count | The number of matches remaining after applying the confidence threshold of 0.20.
 - geometric_score | A measure reported by the matcher of how geometrically consistent the matches are.
 - distribution_quality | A measure of how well the matches are distributed spatially across the imagery.
 - match_seconds | Time spent performing the matching operation.
