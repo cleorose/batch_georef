@@ -2,12 +2,13 @@
 mg_root: "C:/Users/eu01251115/LocalProjects/georefio"
 
 # current batch
-batch_name: "carver_1963"
+batch_name: "carver_1957"
 county: Carver
-years: [1963]
+years: [1957]
 scale: 20000
-chunk_size: 3 # null = no limit
+chunk_size: 5 # null = no limit
 
+# for processing only 1 photo
 single_photo_id: "carver_1963_wm-1dd-228"
 
 # parameters

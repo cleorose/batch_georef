@@ -102,11 +102,7 @@ for _, photo in tracker.iterrows():
         )
 
         # Update matching metrics.
-        tracker_metrics = {
-            key: value
-            for key, value in metrics.items()
-            if key != "gcp_count"
-        }
+        tracker_metrics = metrics
 
         update_match_metrics(
             TRACKER_PATH,

@@ -119,6 +119,7 @@ def update_match_metrics(tracker_path, cty_year_id, metrics):
     field_types = {
         "match_count": QVariant.Int,
         "inlier_count": QVariant.Int,
+        "gcp_count": QVariant.Int,
         "confidence": QVariant.Double,
         "geometric_score": QVariant.Double,
         "distribution_quality": QVariant.Double,

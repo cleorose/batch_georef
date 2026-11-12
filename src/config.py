@@ -21,8 +21,14 @@ def load_config(config_path=None):
     data_dir = data_dir.resolve()
 
     # resolve index path
-    index = Path(cfg["index"]).expanduser().resolve()
+    index = Path(cfg["index"]).expanduser()
 
+    if not index.is_absolute():
+        index = PROJECT_ROOT / index
+
+    index = index.resolve()
+
+    # find MG plugin
     mg_root = Path(cfg["mg_root"]).expanduser().resolve()
 
     batch_name = cfg["batch_name"]
