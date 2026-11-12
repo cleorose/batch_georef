@@ -26,3 +26,4 @@ georeferencing:
 
 # relative paths
 data_dir: "data"
+index: "data/main_index_blank.gpkg"
