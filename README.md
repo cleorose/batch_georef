@@ -16,3 +16,13 @@ Fields in the tracker table report the outcome of each photo's matching and geor
 - distribution_quality | A measure of how well the matches are distributed spatially across the imagery.
 - match_seconds | Time spent performing the matching operation.
 - gcp_count | Number of ground control points generated from the filtered matches.
+
+## Usage guide
+
+More instructions coming soon.
+
+To clear module cache in QGIS:
+import importlib
+import src.config
+
+importlib.reload(src.config)

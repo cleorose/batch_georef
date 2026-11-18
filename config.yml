@@ -3,11 +3,11 @@ mg_root: "C:/Users/eu01251115/LocalProjects/georefio"
 
 # current batch
 county: Carver
-years: [1953]
-scale: 17000
-chunk_size: 20 # null = no limit
+years: [1951]
+scale: 20000
+chunk_size: 5 # null = no limit
 
-# for processing only 1 photo
+# for testing with only 1 photo
 single_photo_id: "carver_1963_wm-1dd-228"
 
 # parameters
@@ -28,6 +28,8 @@ georeferencing:
 data_dir: "data"
 index: "data/main_index_blank.gpkg"
 
+# -------------------------------------
+#
 # Defaults parameters:
 # matching:
 #   reference_source: esri_world_imagery
