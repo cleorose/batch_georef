@@ -33,8 +33,9 @@ def load_config(config_path=None):
 
     county = str(cfg["county"]).strip().lower().replace(" ", "_")
     years = "_".join(str(year) for year in cfg["years"])
+    scale = cfg["scale]"]
 
-    batch_name = f"{county}_{years}"
+    batch_name = f"{county}_{years}_{scale}"
 
     # Generate paths
     cfg["paths"] = {
