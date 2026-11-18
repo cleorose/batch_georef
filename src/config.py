@@ -33,7 +33,7 @@ def load_config(config_path=None):
 
     county = str(cfg["county"]).strip().lower().replace(" ", "_")
     years = "_".join(str(year) for year in cfg["years"])
-    scale = cfg["scale]"]
+    scale = str(cfg["scale"])
 
     batch_name = f"{county}_{years}_{scale}"
 
@@ -58,18 +58,20 @@ def photo_paths(photo, cfg):
 
     county = str(photo["county"]).strip().lower().replace(" ", "_")
     year = str(int(photo["year"]))
+    scale = str(cfg["scale"])
 
-    folder = f"{county}_{year}"
+    source_folder = f"{county}_{year}"
+    output_folder = f"{county}_{year}_{scale}"
 
     return {
         "jpeg": (
             cfg["paths"]["downloads"]
-            / f"{folder}_originals"
+            / f"{source_folder}_originals"
             / f"{photo_id}_original.jpg"
         ),
         "geotiff": (
             cfg["paths"]["outputs"]
-            / f"{folder}_georef"
-            / f"{photo_id}_georef.tif"
+            / f"{output_folder}_georef"
+            / f"{photo_id}_{scale}_georef.tif"
         ),
     }
