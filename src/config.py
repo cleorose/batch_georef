@@ -31,7 +31,10 @@ def load_config(config_path=None):
     # find MG plugin
     mg_root = Path(cfg["mg_root"]).expanduser().resolve()
 
-    batch_name = cfg["batch_name"]
+    county = str(cfg["county"]).strip().lower().replace(" ", "_")
+    years = "_".join(str(year) for year in cfg["years"])
+
+    batch_name = f"{county}_{years}"
 
     # Generate paths
     cfg["paths"] = {

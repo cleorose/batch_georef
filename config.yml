@@ -2,9 +2,8 @@
 mg_root: "C:/Users/eu01251115/LocalProjects/georefio"
 
 # current batch
-batch_name: "carver_1957"
 county: Carver
-years: [1957]
+years: [1963]
 scale: 20000
 chunk_size: 5 # null = no limit
 
