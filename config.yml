@@ -4,8 +4,8 @@ mg_root: "C:/Users/eu01251115/LocalProjects/georefio"
 # current batch
 county: Carver
 years: [1963]
-scale: 20000
-chunk_size: 3 # null = no limit
+scale: 20000 # find using MHAPO metadata
+chunk_size: 5 # null = no limit
 
 # for testing with only 1 photo
 single_photo_id: "carver_1963_wm-1dd-228"
