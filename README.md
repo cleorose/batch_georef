@@ -24,5 +24,7 @@ More instructions coming soon.
 To clear module cache in QGIS:
 import importlib
 import src.config
+import src.georeferencing
 
 importlib.reload(src.config)
+importlib.reload(src.georeferencing)

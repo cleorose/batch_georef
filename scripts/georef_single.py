@@ -28,7 +28,8 @@ from src.georeferencing import (
     select_photo,
     initialize_matcher,
     process_one_photo,
-    update_match_metrics
+    update_match_metrics,
+    update_georef_status,
 )
 
 # Paths
@@ -66,30 +67,54 @@ else:
     print("Reusing existing matching model")
 
 # Process one photograph.
-metrics = process_one_photo(
-    photo=photo,
-    jpeg_path=jpeg_path,
-    output_path=output_path,
-    matcher=matcher,
-    fetcher=fetcher,
-    generator=generator,
-    georeferencer=georeferencer,
-    cfg=cfg,
-)
+try: 
+    metrics = process_one_photo(
+        photo=photo,
+        jpeg_path=jpeg_path,
+        output_path=output_path,
+        matcher=matcher,
+        fetcher=fetcher,
+        generator=generator,
+        georeferencer=georeferencer,
+        cfg=cfg,
+    )
 
-# Update the tracker after successful processing.
-tracker_metrics = {
-    key: value
-    for key, value in metrics.items()
-    if key != "gcp_count"
-}
+    # Update the tracker after successful processing.
+    tracker_metrics = {
+        key: value
+        for key, value in metrics.items()
+        if key != "gcp_count"
+    }
 
-update_match_metrics(
-    TRACKER_PATH,
-    CTY_YEAR_ID,
-    tracker_metrics,
-)
+    update_match_metrics(
+        TRACKER_PATH,
+        CTY_YEAR_ID,
+        tracker_metrics,
+    )
 
-print(f"\nFinished processing {CTY_YEAR_ID}")
-print("Output:", output_path)
-print("Metrics:", metrics)
+    # Record successful georeferencing.
+    update_georef_status(
+        TRACKER_PATH,
+        CTY_YEAR_ID,
+        status="success",
+    )
+
+    print(f"\nFinished processing {CTY_YEAR_ID}")
+    print("Output:", output_path)
+    print("Metrics:", metrics)
+
+except Exception as exc:
+    print(f"FAILED: {CTY_YEAR_ID}: {exc}")
+
+    # Record failure in the tracker.
+    try:
+        update_georef_status(
+            TRACKER_PATH,
+            CTY_YEAR_ID,
+            status="failed",
+            error=str(exc),
+        )
+    except Exception as tracking_exc:
+        print(f"Could not record failure: {tracking_exc}")
+
+    raise

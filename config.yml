@@ -5,7 +5,7 @@ mg_root: "C:/Users/eu01251115/LocalProjects/georefio"
 county: Carver
 years: [1963]
 scale: 20000
-chunk_size: 10 # null = no limit
+chunk_size: 20 # null = no limit
 
 # for testing with only 1 photo
 single_photo_id: "carver_1963_wm-1dd-228"
